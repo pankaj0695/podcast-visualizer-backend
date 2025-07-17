@@ -9,5 +9,5 @@ CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 app.register_blueprint(podcast_bp)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
