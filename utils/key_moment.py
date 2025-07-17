@@ -1,9 +1,5 @@
 import os
 import requests
-import base64
-import tempfile
-import vertexai
-from vertexai.generative_models import GenerativeModel
 import json
 import re
 from gtts import gTTS
@@ -15,29 +11,18 @@ from moviepy import (
     CompositeVideoClip,
     concatenate_videoclips
 )
+from utils.vertex_ai_helper import generate_content_with_vertex_ai
 
 WIDTH, HEIGHT = 432, 768
 FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 FONT_SIZE = 28
 
-PROMPT = '''You are a helpful assistant. Analyze the following podcast transcript and extract the top 3 most important key moments.\n\nFor each key moment, return:\n- `keywords`: An array of 5 to 6 **single-word**, highly descriptive keywords related to the visual theme or concept (e.g., ["technology", "innovation", "robotics", "future", "healthcare", "AI"]).\n- `script`: A **first-person summary** of the moment written in a natural, conversational tone (e.g., "I realized...", "We discussed..."). The script should be approximately **60–75 words**, or **25–30 seconds** when read aloud.\n\nMake the summaries insightful and engaging. Use **ONLY JSON format** in your response — do NOT include timestamps, speaker names, or bullet points.\n\nExample output:\n[\n  {\n    "keywords": ["AI", "robotics", "healthcare", "future", "data", "ethics", "technology"],\n    "script": "I talked about how artificial intelligence is completely transforming fields like healthcare and education. We explored how AI-driven tools are becoming more accessible and discussed the importance of responsible innovation. I realized the future isn't just about technology—it's also about how humans use it thoughtfully and ethically."\n  },\n  ...\n]\n\nTranscript:\n'''
+PROMPT = '''You are a helpful assistant. Analyze the following podcast transcript and extract the top 3 most important key moments.\n\nFor each key moment, return:\n- `keywords`: An array of 5 to 6 **single-word**, highly descriptive keywords related to the visual theme or concept (e.g., ["technology", "innovation", "robotics", "future", "healthcare", "AI"]).\n- `script`: A **first-person summary** of the moment written in a natural, conversational tone (e.g., "I realized...", "We discussed..."). The script should be approximately **60-75 words**, or **25-30 seconds** when read aloud.\n\nMake the summaries insightful and engaging. Use **ONLY JSON format** in your response — do NOT include timestamps, speaker names, or bullet points.\n\nExample output:\n[\n  {\n    "keywords": ["AI", "robotics", "healthcare", "future", "data", "ethics", "technology"],\n    "script": "I talked about how artificial intelligence is completely transforming fields like healthcare and education. We explored how AI-driven tools are becoming more accessible and discussed the importance of responsible innovation. I realized the future isn't just about technology—it's also about how humans use it thoughtfully and ethically."\n  },\n  ...\n]\n\nTranscript:\n'''
 
 def extract_key_moments(transcript_segments):
-    credentials_base64 = os.environ.get("GOOGLE_CREDENTIALS_JSON_BASE64")
-    if not credentials_base64:
-        raise RuntimeError("GOOGLE_CREDENTIALS_JSON_BASE64 not found in environment variables")
-    key_file_path = os.path.join(tempfile.gettempdir(), "key.json")
-    with open(key_file_path, "w") as f:
-        f.write(base64.b64decode(credentials_base64).decode("utf-8"))
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file_path
-    project_id = os.environ.get("GCP_PROJECT_ID")
-    location = os.environ.get("LOCATION")
-    vertexai.init(project=project_id, location=location)
-    model = GenerativeModel("gemini-2.5-flash")
     transcript_text = "\n".join([t["text"] for t in transcript_segments])
     prompt = PROMPT + transcript_text
-    response = model.generate_content(prompt)
-    result = response.text
+    result = generate_content_with_vertex_ai(prompt)
     json_match = re.search(r"\[\s*{.*?}\s*\]", result, re.DOTALL)
     if json_match:
         return json.loads(json_match.group(0))
@@ -61,17 +46,19 @@ def fetch_stock_clip(keyword, duration=5):
 
 def generate_caption_clips(script, idx, total_dur):
     words = script.split()
-    chunks = [' '.join(words[i-3:i+1]) for i in range(len(words))]
+    chunks = [' '.join(words[i:i+4]) for i in range(0, len(words), 4)]  # 4-word chunks
     dur = total_dur / len(chunks)
     font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
     clips = []
     img_files = []
     for j, chunk in enumerate(chunks):
-        img = Image.new("RGBA", (WIDTH, HEIGHT))
+        img = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
         bbox = draw.textbbox((0,0), chunk, font=font)
         x = (WIDTH - (bbox[2]-bbox[0]))//2
-        y = (HEIGHT - (bbox[3]-bbox[1]))//2
+        y = HEIGHT - (bbox[3]-bbox[1]) - 60  # Position at bottom with margin
+        # Add dark background rectangle
+        draw.rectangle([(x-10, y-10), (x+bbox[2]-bbox[0]+10, y+bbox[3]-bbox[1]+10)], fill=(0,0,0,180))
         draw.text((x,y), chunk, font=font, fill="white")
         fname = f"caption_{idx}_{j}.png"
         img.save(fname)
@@ -80,7 +67,7 @@ def generate_caption_clips(script, idx, total_dur):
             ImageClip(fname, transparent=True)
                 .with_start(j*dur)
                 .with_duration(dur)
-                .with_position("center")
+                .with_position(("center", "bottom"))
         )
     return clips, img_files
 

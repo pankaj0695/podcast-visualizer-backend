@@ -1,33 +1,15 @@
 import os
 import re
 import json
-import tempfile
-import base64
-import vertexai
-from vertexai.generative_models import GenerativeModel
 from moviepy import (
     VideoFileClip,
     ImageClip,
     CompositeVideoClip
 )
+from utils.vertex_ai_helper import generate_content_with_vertex_ai
 
 def extract_video_key_moments(transcript_segments):
     """Extract key moments from video transcript using Vertex AI Gemini"""
-    
-    # Set up Vertex AI credentials
-    credentials_base64 = os.environ.get("GOOGLE_CREDENTIALS_JSON_BASE64")
-    if not credentials_base64:
-        raise RuntimeError("GOOGLE_CREDENTIALS_JSON_BASE64 not found in environment variables")
-    
-    key_file_path = os.path.join(tempfile.gettempdir(), "key.json")
-    with open(key_file_path, "w") as f:
-        f.write(base64.b64decode(credentials_base64).decode("utf-8"))
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = key_file_path
-    
-    project_id = os.environ.get("GCP_PROJECT_ID")
-    location = os.environ.get("LOCATION")
-    vertexai.init(project=project_id, location=location)
-    model = GenerativeModel("gemini-2.5-flash")
     
     # Create transcript with timestamps
     transcript_text = "\n".join(
@@ -53,8 +35,7 @@ Transcript:
 {transcript_text}
 """
     
-    response = model.generate_content(prompt)
-    result = response.text
+    result = generate_content_with_vertex_ai(prompt)
     
     # Extract JSON from response
     json_match = re.search(r'\[.*?\]', result, re.DOTALL)

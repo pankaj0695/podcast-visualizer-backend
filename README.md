@@ -1,4 +1,10 @@
-# Podcast Visualizer Backend
+# Podcast Visualizer Bac└── utils/
+
+    ├── transcription.py   # Audio/video transcription
+    ├── key_moment.py     # Audio podcast processing (stock videos)
+    ├── ai_key_moment.py  # Audio podcast processing (AI images)
+    ├── video_processing.py # Video podcast processing
+    └── vertex_ai_helper.py # Vertex AI utilities
 
 A powerful Flask-based API that transforms podcast content into engaging visual clips using AI-powered transcription and key moment extraction.
 
@@ -25,7 +31,8 @@ A powerful Flask-based API that transforms podcast content into engaging visual 
 └── utils/
     ├── transcription.py   # Audio/video transcription
     ├── key_moment.py     # Audio podcast processing
-    └── video_processing.py # Video podcast processing
+    ├── video_processing.py # Video podcast processing
+    └── vertex_ai_helper.py # Centralized Vertex AI operations
 ```
 
 ## 📋 Prerequisites
@@ -117,7 +124,50 @@ Processes audio podcasts and creates visual clips with AI-generated content and 
 6. Creates composite videos with captions
 7. Uploads to Cloudinary and returns URLs
 
-### 2. Video Podcast Key Moments
+### 2. Audio Podcast AI Key Moments
+
+**POST** `/api/podcast/audio-podcast-ai-key-moments`
+
+Processes audio podcasts and creates visual clips with AI-generated images instead of stock footage.
+
+**Request Body:**
+
+```json
+{
+  "audio_url": "https://example.com/podcast.mp3"
+}
+```
+
+**Response:**
+
+```json
+{
+  "video_urls": [
+    "https://res.cloudinary.com/your_cloud/video/upload/ai_keymoment_1.mp4",
+    "https://res.cloudinary.com/your_cloud/video/upload/ai_keymoment_2.mp4"
+  ]
+}
+```
+
+**Process Flow:**
+
+1. Downloads audio from provided URL
+2. Transcribes using local OpenAI Whisper
+3. Analyzes transcript with Vertex AI Gemini for key moments and image prompts
+4. Generates 5-6 AI images per moment using Vertex AI Imagen
+5. Generates TTS audio for moment summaries
+6. Creates video clips from AI-generated images with captions
+7. Uploads to Cloudinary and returns URLs
+
+**Features:**
+
+- **AI-Generated Visuals**: Creates unique, contextually relevant images for each moment
+- **Custom Image Prompts**: Generates 5-6 detailed prompts per key moment
+- **High-Quality Images**: Uses Vertex AI Imagen 4.0 for professional-grade visuals
+- **Portrait Format**: Optimized 9:16 aspect ratio for social media
+- **Synchronized Captions**: Text overlays matching the spoken content
+
+### 3. Video Podcast Key Moments
 
 **POST** `/video-podcast-key-moments`
 
@@ -150,6 +200,45 @@ Extracts key moments from video podcasts with synchronized captions from the ori
 4. Extracts video clips for identified moments
 5. Adds synchronized captions (4-word chunks) at the bottom
 6. Uploads processed clips to Cloudinary
+
+### 4. Abstract Summary
+
+**POST** `/api/podcast/abstract-summary`
+
+Generates a well-formatted markdown summary from any podcast (audio or video) with key points and takeaways.
+
+**Request Body:**
+
+```json
+{
+  "podcast_url": "https://example.com/podcast.mp3"
+}
+```
+
+**Response:**
+
+```json
+{
+  "summary": "## Overview\n\nI discussed the fundamental challenges facing modern AI development, particularly around ethical considerations and responsible deployment. My main argument centered on the importance of transparency in AI systems and how we can build trust through open communication.\n\n## Key Points\n\n- **Data Privacy**: I emphasized the critical need for protecting user data while enabling AI innovation\n- **Algorithmic Bias**: We explored how unconscious biases can creep into AI systems and methods to detect them\n- **Human Oversight**: I argued for maintaining human control in automated decision-making processes\n- **Transparency**: The importance of making AI systems explainable and understandable to end users\n\n## Main Takeaways\n\n- Organizations must prioritize ethical AI practices from the ground up\n- Building trust requires consistent transparency and open communication\n- Technical solutions alone aren't enough - we need policy and cultural changes\n- The future of AI depends on how well we balance innovation with responsibility"
+}
+```
+
+**Process Flow:**
+
+1. Auto-detects file type (audio/video) from URL
+2. Downloads and transcribes using local OpenAI Whisper
+3. Analyzes full transcript with Vertex AI Gemini 2.5 Flash
+4. Generates structured markdown summary with overview, key points, and takeaways
+5. Returns formatted summary maintaining speaker's voice and perspective
+
+**Features:**
+
+- **Markdown Formatting**: Clean, readable structure with headers and bullet points
+- **Smart Detection**: Automatically handles both audio and video files
+- **Speaker's Voice**: Maintains first-person perspective ("I discussed...")
+- **Structured Content**: Overview, key points, and main takeaways sections
+- **Key Insights**: Captures main arguments and actionable insights
+- **Natural Flow**: Coherent narrative structure with clear organization
 
 ## 🧠 How It Works
 
