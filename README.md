@@ -1,17 +1,13 @@
-# Podcast Visualizer Bac└── utils/
-
-    ├── transcription.py   # Audio/video transcription
-    ├── key_moment.py     # Audio podcast processing (stock videos)
-    ├── ai_key_moment.py  # Audio podcast processing (AI images)
-    ├── video_processing.py # Video podcast processing
-    └── vertex_ai_helper.py # Vertex AI utilities
+# Podcast Visualizer Backend
 
 A powerful Flask-based API that transforms podcast content into engaging visual clips using AI-powered transcription and key moment extraction.
 
 ## 🚀 Features
 
 - **Audio Podcast Processing**: Convert audio podcasts into visual clips with AI-generated content
+- **AI Image Generation**: Create custom visuals using Vertex AI Imagen for unique podcast clips
 - **Video Podcast Processing**: Extract key moments from video podcasts with synchronized captions
+- **Abstract Summaries**: Generate structured markdown summaries with key insights
 - **AI-Powered Analysis**: Uses Vertex AI Gemini 2.5 Flash for intelligent key moment detection
 - **Automatic Transcription**: Local OpenAI Whisper integration for accurate speech-to-text
 - **Smart Captioning**: Real-time synchronized captions with 4-word chunking
@@ -30,9 +26,10 @@ A powerful Flask-based API that transforms podcast content into engaging visual 
 │   └── cloudinary_service.py # Cloud storage integration
 └── utils/
     ├── transcription.py   # Audio/video transcription
-    ├── key_moment.py     # Audio podcast processing
+    ├── key_moment.py     # Audio podcast processing (stock videos)
+    ├── ai_key_moment.py  # Audio podcast processing (AI images)
     ├── video_processing.py # Video podcast processing
-    └── vertex_ai_helper.py # Centralized Vertex AI operations
+    └── vertex_ai_helper.py # Vertex AI utilities
 ```
 
 ## 📋 Prerequisites
@@ -78,6 +75,14 @@ A powerful Flask-based API that transforms podcast content into engaging visual 
    GOOGLE_CREDENTIALS_JSON_BASE64=your_base64_encoded_service_account_json
    GCP_PROJECT_ID=your_gcp_project_id
    LOCATION=us-central1
+
+   # Cloudinary (File Storage)
+   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+
+   # Pexels (Stock Videos)
+   PEXELS_API_KEY=your_pexels_api_key
    ```
 
 5. **Run the application**
@@ -87,11 +92,36 @@ A powerful Flask-based API that transforms podcast content into engaging visual 
 
 The API will be available at `http://localhost:5000`
 
+## 🎯 Quick Start
+
+1. **Test with audio podcast key moments (stock videos):**
+
+   ```bash
+   curl -X POST http://localhost:5000/api/podcast/audio-podcast-key-moments \
+     -H "Content-Type: application/json" \
+     -d '{"audio_url": "https://example.com/podcast.mp3"}'
+   ```
+
+2. **Test with AI-generated images:**
+
+   ```bash
+   curl -X POST http://localhost:5000/api/podcast/audio-podcast-ai-key-moments \
+     -H "Content-Type: application/json" \
+     -d '{"audio_url": "https://example.com/podcast.mp3"}'
+   ```
+
+3. **Generate abstract summary:**
+   ```bash
+   curl -X POST http://localhost:5000/api/podcast/abstract-summary \
+     -H "Content-Type: application/json" \
+     -d '{"podcast_url": "https://example.com/podcast.mp3"}'
+   ```
+
 ## 📚 API Endpoints
 
 ### 1. Audio Podcast Key Moments
 
-**POST** `/audio-podcast-key-moments`
+**POST** `/api/podcast/audio-podcast-key-moments`
 
 Processes audio podcasts and creates visual clips with AI-generated content and stock videos.
 
@@ -169,7 +199,7 @@ Processes audio podcasts and creates visual clips with AI-generated images inste
 
 ### 3. Video Podcast Key Moments
 
-**POST** `/video-podcast-key-moments`
+**POST** `/api/podcast/video-podcast-key-moments`
 
 Extracts key moments from video podcasts with synchronized captions from the original transcript.
 
@@ -274,9 +304,17 @@ Generates a well-formatted markdown summary from any podcast (audio or video) wi
 ### Vertex AI Setup
 
 1. Create a Google Cloud Platform project
-2. Enable Vertex AI API
+2. Enable Vertex AI API and Imagen API
 3. Create a service account with Vertex AI permissions
 4. Download service account JSON and encode as base64
+5. Set the GCP_PROJECT_ID to your project ID
+
+### Image Generation Setup
+
+- Uses Vertex AI Imagen 4.0 for AI-generated images
+- Requires access to Imagen preview models
+- Configured for 9:16 aspect ratio (portrait mode)
+- Supports custom safety filters and watermarking
 
 ### Cloudinary Setup
 
