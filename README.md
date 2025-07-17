@@ -75,14 +75,6 @@ A powerful Flask-based API that transforms podcast content into engaging visual 
    GOOGLE_CREDENTIALS_JSON_BASE64=your_base64_encoded_service_account_json
    GCP_PROJECT_ID=your_gcp_project_id
    LOCATION=us-central1
-
-   # Cloudinary (File Storage)
-   CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-   CLOUDINARY_API_KEY=your_cloudinary_api_key
-   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-   # Pexels (Stock Videos)
-   PEXELS_API_KEY=your_pexels_api_key
    ```
 
 5. **Run the application**
